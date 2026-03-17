@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedPlan — AI从理想到现实</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-card: #111827;
+  --bg-surface: #1a2236;
+  --accent: #38bdf8;
+  --accent-warm: #f59e0b;
+  --accent-green: #34d399;
+  --accent-rose: #fb7185;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: rgba(56, 189, 248, 0.15);
+  --glow: rgba(56, 189, 248, 0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ── Slide system ── */
+.slide {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: 
+    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(56,189,248,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(245,158,11,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.slide-number {
+  position: absolute;
+  top: 40px;
+  right: 60px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+}
+
+.slide-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  display: inline-block;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+.slide-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin: 24px 0;
+}
+
+/* ── Typography ── */
+h1 {
+  font-family: 'Noto Serif SC', 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 56px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin-bottom: 24px;
+}
+
+h1 .accent { color: var(--accent); }
+h1 .warm { color: var(--accent-warm); }
+
+h2 {
+  font-family: 'Noto Serif SC', 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.3;
+  margin-bottom: 16px;
+}
+
+h3 {
+  font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+p, li {
+  font-size: 20px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+
+.lead {
+  font-size: 24px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 800px;
+}
+
+/* ── Layout helpers ── */
+.cols { display: grid; gap: 40px; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+}
+
+.card-icon.blue { background: rgba(56,189,248,0.12); color: var(--accent); }
+.card-icon.amber { background: rgba(245,158,11,0.12); color: var(--accent-warm); }
+.card-icon.green { background: rgba(52,211,153,0.12); color: var(--accent-green); }
+.card-icon.rose { background: rgba(251,113,133,0.12); color: var(--accent-rose); }
+
+.num-badge {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 64px;
+  color: rgba(56,189,248,0.1);
+  position: absolute;
+  top: 16px;
+  right: 24px;
+  line-height: 1;
+}
+
+/* ── SOAP Flow ── */
+.soap-flow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+
+.soap-step {
+  padding: 20px 28px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 160px;
+  position: relative;
+}
+
+.soap-step .letter {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 42px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.soap-step .label {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.soap-s { background: rgba(251,113,133,0.12); border: 1px solid rgba(251,113,133,0.25); }
+.soap-s .letter { color: var(--accent-rose); }
+.soap-s .label { color: var(--accent-rose); }
+
+.soap-o { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); }
+.soap-o .letter { color: var(--accent-warm); }
+.soap-o .label { color: var(--accent-warm); }
+
+.soap-a { background: rgba(56,189,248,0.12); border: 1px solid rgba(56,189,248,0.25); }
+.soap-a .letter { color: var(--accent); }
+.soap-a .label { color: var(--accent); }
+
+.soap-p { background: rgba(52,211,153,0.12); border: 1px solid rgba(52,211,153,0.25); }
+.soap-p .letter { color: var(--accent-green); }
+.soap-p .label { color: var(--accent-green); }
+
+.soap-arrow {
+  font-size: 28px;
+  color: var(--text-muted);
+}
+
+/* ── Comparison table ── */
+.compare-box {
+  border-radius: 12px;
+  padding: 32px;
+  border: 1px solid;
+}
+
+.compare-bad {
+  background: rgba(251,113,133,0.05);
+  border-color: rgba(251,113,133,0.2);
+}
+
+.compare-good {
+  background: rgba(52,211,153,0.05);
+  border-color: rgba(52,211,153,0.2);
+}
+
+.compare-box .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 3px;
+}
+
+.compare-bad .tag { background: rgba(251,113,133,0.15); color: var(--accent-rose); }
+.compare-good .tag { background: rgba(52,211,153,0.15); color: var(--accent-green); }
+
+.compare-box blockquote {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  line-height: 1.8;
+  padding: 20px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  border-left: 3px solid;
+  margin-top: 12px;
+}
+
+.compare-bad blockquote { border-color: var(--accent-rose); color: var(--accent-rose); }
+.compare-good blockquote { border-color: var(--accent-green); color: var(--accent-green); }
+
+/* ── Pipeline ── */
+.pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 40px 0;
+}
+
+.pipeline-stage {
+  flex: 1;
+  padding: 28px 24px;
+  text-align: center;
+  position: relative;
+}
+
+.pipeline-stage h3 { font-size: 18px; margin-bottom: 8px; }
+.pipeline-stage p { font-size: 15px; }
+
+.stage-1 {
+  background: linear-gradient(135deg, rgba(56,189,248,0.1), rgba(56,189,248,0.03));
+  border: 1px solid rgba(56,189,248,0.2);
+  border-radius: 12px 0 0 12px;
+}
+
+.stage-2 {
+  background: linear-gradient(135deg, rgba(52,211,153,0.1), rgba(52,211,153,0.03));
+  border: 1px solid rgba(52,211,153,0.2);
+  border-radius: 0 12px 12px 0;
+}
+
+.stage-connector {
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--text-muted);
+}
+
+/* ── Stats ── */
+.stat {
+  text-align: center;
+  padding: 24px;
+}
+
+.stat-num {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  font-size: 52px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ── Timeline ── */
+.timeline-item {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 28px;
+  align-items: flex-start;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.timeline-item p { font-size: 17px; }
+
+/* ── Discussion ── */
+.q-card {
+  background: var(--bg-surface);
+  border-left: 3px solid var(--accent);
+  padding: 24px 28px;
+  margin-bottom: 16px;
+  border-radius: 0 8px 8px 0;
+  font-size: 20px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+/* ── Title slide special ── */
+.title-slide {
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+}
+
+.title-slide h1 {
+  font-size: 64px;
+  max-width: 900px;
+}
+
+.title-sub {
+  font-size: 20px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+.title-meta {
+  margin-top: 40px;
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 2;
+}
+
+.title-badge {
+  display: inline-block;
+  padding: 6px 20px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 32px;
+}
+
+/* ── Decorative ── */
+.bg-glyph {
+  position: absolute;
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 900;
+  font-size: 280px;
+  color: rgba(56,189,248,0.03);
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.highlight-box {
+  background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(52,211,153,0.05));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  margin: 24px 0;
+}
+
+.highlight-box p {
+  font-size: 19px;
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+/* ── Section divider ── */
+.section-divider {
+  background: linear-gradient(135deg, var(--bg-deep), var(--bg-surface));
+  text-align: center;
+}
+
+.section-divider h2 {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.section-divider .lead {
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .slide { padding: 40px 32px; }
+  h1 { font-size: 36px; }
+  h2 { font-size: 28px; }
+  .cols-2, .cols-3 { grid-template-columns: 1fr; }
+  .soap-flow { flex-direction: column; }
+  .pipeline { flex-direction: column; }
+  .stage-1, .stage-2 { border-radius: 12px; }
+  .stage-connector { transform: rotate(90deg); }
+}
+
+/* ── Print-friendly ── */
+@media print {
+  .slide { page-break-after: always; min-height: auto; padding: 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== SLIDE 1: TITLE ====== -->
+<section class="slide title-slide">
+  <div class="bg-glyph" style="top:-40px; left:-60px;">医</div>
+  <div class="bg-glyph" style="bottom:-80px; right:-40px;">AI</div>
+  <div class="title-badge">ACL 2025 · 原熠 AI 沙龙</div>
+  <h1>让AI<span class="accent">像医生一样思考</span></h1>
+  <p class="lead" style="text-align:center; max-width:700px;">MedPlan: 基于RAG的两阶段个性化医疗方案生成系统</p>
+  <div class="slide-divider" style="margin: 24px auto;"></div>
+  <div class="title-meta">
+    <strong style="color:var(--text-primary);">骆东升 (Dongsheng Luo)</strong><br>
+    TrustAI4S Lab<br><br>
+    <span style="font-size:13px; color:var(--text-muted);">
+      合作单位：密歇根大学 · 国立阳明交通大学 · 史蒂文斯理工学院 · 亚东纪念医院
+    </span>
+  </div>
+</section>
+
+<!-- ====== SLIDE 2: THE PROBLEM ====== -->
+<section class="slide">
+  <span class="slide-number">02 / 13</span>
+  <span class="slide-tag">问题背景</span>
+  <h2>医生被淹没在数据中，<br>却缺少<span style="color:var(--accent-warm)">决策支持</span></h2>
+  <div class="slide-divider"></div>
+  <div class="cols cols-3" style="margin-top: 32px;">
+    <div class="card">
+      <div class="card-icon rose">⏱</div>
+      <h3>时间危机</h3>
+      <p>医护人员每小时花15-20分钟在行政任务上，电子病历(EHR)创造了海量数据，却没有帮助医生做决策。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon amber">🔬</div>
+      <h3>AI只做了一半</h3>
+      <p>现有的医疗AI系统大多聚焦于<strong style="color:var(--text-primary)">诊断评估</strong>，却忽略了同样关键的下一步——<strong style="color:var(--accent-warm)">个性化治疗方案</strong>。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon blue">🎯</div>
+      <h3>我们的目标</h3>
+      <p>让AI不仅能帮助诊断，更能生成<strong style="color:var(--text-primary)">结构化、个性化</strong>的治疗方案——像一位经验丰富的医生那样思考。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 3: THREE GAPS ====== -->
+<section class="slide">
+  <span class="slide-number">03 / 13</span>
+  <span class="slide-tag">现状挑战</span>
+  <h2>现有AI方案的<span style="color:var(--accent-rose)">三大缺陷</span></h2>
+  <div class="slide-divider"></div>
+  <div class="cols cols-3" style="margin-top: 32px;">
+    <div class="card" style="border-top: 3px solid var(--accent-rose);">
+      <span class="num-badge">1</span>
+      <h3 style="color:var(--accent-rose);">一步到位的幻觉</h3>
+      <p>现有系统试图从症状直接跳到治疗方案——但医生从不这样工作。他们先诊断，再制定方案。<strong style="color:var(--text-primary)">跳过推理过程 = 脱离诊断的治疗建议。</strong></p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent-warm);">
+      <span class="num-badge">2</span>
+      <h3 style="color:var(--accent-warm);">缺乏个性化</h3>
+      <p>不考虑患者的病史、既往治疗反应和纵向趋势。结果是千篇一律的"通用建议"，<strong style="color:var(--text-primary)">无法适应个体差异。</strong></p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <span class="num-badge">3</span>
+      <h3 style="color:var(--accent);">主客观不分</h3>
+      <p>患者说"胸口疼"（主观）和化验显示肌钙蛋白升高（客观）在临床中权重完全不同，<strong style="color:var(--text-primary)">现有系统混为一谈。</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 4: SOAP ====== -->
+<section class="slide">
+  <span class="slide-number">04 / 13</span>
+  <span class="slide-tag">临床基础</span>
+  <h2>医生的思维框架：<span style="color:var(--accent)">SOAP协议</span></h2>
+  <div class="slide-divider"></div>
+  <p class="lead">SOAP是全球临床实践的黄金标准——将诊疗过程结构化为四个递进步骤：</p>
+  
+  <div class="soap-flow">
+    <div class="soap-step soap-s">
+      <span class="letter">S</span>
+      <span class="label">Subjective 主观</span>
+      <p style="font-size:14px; margin-top:8px; color:var(--text-muted);">患者自述症状<br>"我胸口疼"</p>
+    </div>
+    <span class="soap-arrow">→</span>
+    <div class="soap-step soap-o">
+      <span class="letter">O</span>
+      <span class="label">Objective 客观</span>
+      <p style="font-size:14px; margin-top:8px; color:var(--text-muted);">检查检验数据<br>肌钙蛋白 ↑ 血压 160/95</p>
+    </div>
+    <span class="soap-arrow">→</span>
+    <div class="soap-step soap-a">
+      <span class="letter">A</span>
+      <span class="label">Assessment 评估</span>
+      <p style="font-size:14px; margin-top:8px; color:var(--text-muted);">诊断结论<br>疑似冠心病</p>
+    </div>
+    <span class="soap-arrow">→</span>
+    <div class="soap-step soap-p">
+      <span class="letter">P</span>
+      <span class="label">Plan 方案</span>
+      <p style="font-size:14px; margin-top:8px; color:var(--text-muted);">治疗计划<br>心导管 + 药物 + 生活方式</p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <p>💡 <strong>核心洞察：</strong>医生永远是"先想清楚怎么回事"，再"决定怎么治"。MedPlan的设计哲学就是复刻这个思维过程。</p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 5: MEDPLAN PIPELINE ====== -->
+<section class="slide">
+  <span class="slide-number">05 / 13</span>
+  <span class="slide-tag">核心方案</span>
+  <h2>MedPlan：<span style="color:var(--accent)">两阶段</span>诊疗管线</h2>
+  <div class="slide-divider"></div>
+  
+  <div class="pipeline">
+    <div class="pipeline-stage stage-1">
+      <div style="font-size:40px; margin-bottom:12px;">🧠</div>
+      <h3 style="color:var(--accent);">第一阶段：诊断评估</h3>
+      <p style="font-size:16px; color:var(--text-secondary);">
+        输入患者的<strong style="color:var(--accent-rose)">主观症状(S)</strong>和<strong style="color:var(--accent-warm)">客观数据(O)</strong>，
+        结合历史病历和相似病例，<br>生成<strong style="color:var(--accent)">临床评估(A)</strong>
+      </p>
+    </div>
+    <div class="stage-connector">→</div>
+    <div class="pipeline-stage stage-2">
+      <div style="font-size:40px; margin-bottom:12px;">💊</div>
+      <h3 style="color:var(--accent-green);">第二阶段：方案生成</h3>
+      <p style="font-size:16px; color:var(--text-secondary);">
+        基于第一阶段的评估结果，结合完整的患者档案，
+        检索相似治疗方案，<br>生成<strong style="color:var(--accent-green)">个性化治疗计划(P)</strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    <p>🔑 <strong>关键设计：先诊断，后治疗</strong>——就像真实的医生一样。这不是"一步到位"，而是两步推理。每一步都有据可查、可追溯。</p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 6: RAG ====== -->
+<section class="slide">
+  <span class="slide-number">06 / 13</span>
+  <span class="slide-tag">个性化引擎</span>
+  <h2>RAG：让AI拥有<span style="color:var(--accent-warm)">记忆和经验</span></h2>
+  <div class="slide-divider"></div>
+  <p class="lead">检索增强生成(RAG)让模型在生成方案前"翻阅"相关资料——就像老医生查看病历本。</p>
+  
+  <div class="cols cols-2" style="margin-top: 32px;">
+    <div class="card" style="border-left: 3px solid var(--accent);">
+      <div class="card-icon blue">📋</div>
+      <h3>自身病史参考</h3>
+      <p>检索该患者最近<strong style="color:var(--text-primary)">20次就诊记录</strong>，了解既往诊断、用药反应和病程变化。</p>
+      <p style="margin-top:12px; font-size:15px; color:var(--text-muted);">类比：老医生翻看你的"病历本"</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--accent-warm);">
+      <div class="card-icon amber">🔍</div>
+      <h3>跨患者相似病例</h3>
+      <p>从<strong style="color:var(--text-primary)">6000名患者</strong>的知识库中，通过语义搜索+重排序找到最相似的病例作为参考。</p>
+      <p style="margin-top:12px; font-size:15px; color:var(--text-muted);">类比：见过数千病例的资深专家</p>
+    </div>
+  </div>
+
+  <div style="margin-top:32px;">
+    <p style="font-size:17px; color:var(--text-muted);">
+      技术实现：BM25关键词匹配 + 语义向量搜索（混合检索），再通过Cross-Encoder精排——从80个候选中精选10个最相关参考。
+    </p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 7: CASE COMPARISON ====== -->
+<section class="slide">
+  <span class="slide-number">07 / 13</span>
+  <span class="slide-tag">真实案例</span>
+  <h2>同一个患者，<span style="color:var(--accent-green)">天壤之别</span>的AI输出</h2>
+  <div class="slide-divider"></div>
+  <p style="margin-bottom:24px; color:var(--text-muted); font-size:17px;">
+    患者：高血脂、高血压、代谢综合征、前期糖尿病 —— 多重心血管风险因素
+  </p>
+  
+  <div class="cols cols-2">
+    <div class="compare-box compare-bad">
+      <span class="tag">Baseline 基线模型</span>
+      <h3 style="color:var(--accent-rose);">单阶段直接生成</h3>
+      <blockquote>"Keep current Rx"<br><span style="font-size:13px; opacity:0.7;">（维持现有处方）</span></blockquote>
+      <p style="margin-top:16px; font-size:16px; color:var(--accent-rose);">
+        ✗ 没有诊断程序<br>
+        ✗ 没有药物调整<br>
+        ✗ 没有生活方式建议<br>
+        ✗ 对复杂病例完全无效
+      </p>
+    </div>
+    <div class="compare-box compare-good">
+      <span class="tag">MedPlan 我们的方案</span>
+      <h3 style="color:var(--accent-green);">两阶段SOAP推理</h3>
+      <blockquote>"心导管检查。如症状持续，<br>维持 Kerlone、Cozaar，<br>鼓励运动和饮食控制。"</blockquote>
+      <p style="margin-top:16px; font-size:16px; color:var(--accent-green);">
+        ✓ 优先安排诊断程序<br>
+        ✓ 条件性药物管理<br>
+        ✓ 纳入生活方式干预<br>
+        ✓ 与真实医生方案高度一致
+      </p>
+    </div>
+  </div>
+
+  <div style="margin-top: 28px; display:flex; justify-content:center;">
+    <div class="stat">
+      <div class="stat-num">~66%</div>
+      <div class="stat-label">医生评估临床改善幅度</div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 8: DEPLOYED SYSTEM ====== -->
+<section class="slide">
+  <span class="slide-number">08 / 13</span>
+  <span class="slide-tag">落地实践</span>
+  <h2>从论文到<span style="color:var(--accent)">医院系统</span></h2>
+  <div class="slide-divider"></div>
+
+  <div class="cols cols-2" style="margin-top:24px;">
+    <div>
+      <p class="lead">MedPlan已在台湾亚东纪念医院部署为临床原型系统，经过真实医生评审验证。</p>
+      <div style="margin-top:28px;">
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:var(--accent);"></div>
+          <div>
+            <h3 style="font-size:18px;">医生可编辑评估</h3>
+            <p style="font-size:16px;">系统生成评估(A)后，医生可修改，再自动重新生成治疗方案(P)</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:var(--accent-warm);"></div>
+          <div>
+            <h3 style="font-size:18px;">RAG实时更新</h3>
+            <p style="font-size:16px;">修改评估后，系统重新检索知识库，确保方案与最新判断一致</p>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:var(--accent-green);"></div>
+          <div>
+            <h3 style="font-size:18px;">全栈技术架构</h3>
+            <p style="font-size:16px;">React前端 + FastAPI后端 + Weaviate向量库 + MSSQL病历库</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; justify-content:center; align-items:center; background: var(--bg-surface); min-height: 320px;">
+      <div style="font-size:80px; margin-bottom:16px;">🏥</div>
+      <h3 style="text-align:center; font-size:20px;">亚东纪念医院 (FEMH)</h3>
+      <p style="text-align:center; font-size:15px; margin-top:8px;">
+        350,684条门诊和急诊SOAP记录<br>
+        55,890名患者 · 2021年数据<br>
+        完整去标识化处理
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SECTION DIVIDER: FUTURE ====== -->
+<section class="slide section-divider">
+  <span class="slide-number">09 / 13</span>
+  <span class="slide-tag">未来展望</span>
+  <h2>下一步：从Copilot到<span style="color:var(--accent)">Agent</span></h2>
+  <div class="slide-divider" style="margin: 24px auto;"></div>
+  <p class="lead">MedPlan是一个"副驾驶"——为医生提供建议。但AI医疗的下一波浪潮，是能够自主执行多步临床工作流的<strong style="color:var(--text-primary)">智能体(Agent)</strong>。</p>
+</section>
+
+<!-- ====== SLIDE 10: OPENCLAW & AGENTS ====== -->
+<section class="slide">
+  <span class="slide-number">10 / 13</span>
+  <span class="slide-tag">趋势一 · 智能体</span>
+  <h2><span style="color:var(--accent);">OpenClaw</span>与医疗智能体时代</h2>
+  <div class="slide-divider"></div>
+
+  <div class="cols cols-2" style="margin-top:24px;">
+    <div>
+      <h3 style="color:var(--accent); margin-bottom:16px;">什么是OpenClaw？</h3>
+      <p style="margin-bottom:16px;">2025年底诞生的开源自主AI智能体框架，2026年初爆发式增长。创始人Peter Steinberger已加入OpenAI。</p>
+      <p style="margin-bottom:16px;">核心能力：不只是"回答问题"，而是<strong style="color:var(--text-primary)">观察、推理、自主执行</strong>——它能操作邮件、日历、消息平台和文件系统。</p>
+      
+      <h3 style="color:var(--accent-warm); margin-top:28px; margin-bottom:16px;">医疗领域的早期探索</h3>
+      <p style="margin-bottom:12px;">• <strong style="color:var(--text-primary);">OpenClaw Medical Skills</strong>：汇集12+开源技能库，覆盖临床流程、药物发现、合规框架</p>
+      <p style="margin-bottom:12px;">• <strong style="color:var(--text-primary);">NHS试点</strong>：AI智能体自动筛查CT/CTA报告，向值班医生推送关键发现</p>
+      <p>• <strong style="color:var(--text-primary);">"Heartbeat Engine"</strong>：自动扫描化验队列和床位状态，在晨会前提出出院建议</p>
+    </div>
+    <div>
+      <div class="card" style="border-top: 3px solid var(--accent-rose); margin-bottom:20px;">
+        <h3 style="color:var(--accent-rose);">⚠️ 但医疗智能体尚未成熟</h3>
+        <p style="font-size:17px;">
+          <strong style="color:var(--text-primary)">因果推理不足：</strong>OpenClaw依赖概率模式识别，无法回答"这个治疗是否导致了改善？"这类因果问题。<br><br>
+          <strong style="color:var(--text-primary)">安全与合规：</strong>持续运行的智能体需要永远不违反政策——当前技术无法保证。中国已于2026年3月限制国企使用OpenClaw。<br><br>
+          <strong style="color:var(--text-primary)">核心观点：</strong>医疗需要的是"受控智能体"，而非"自由运行的AI"。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 11: MULTI-AGENT & MARKET ====== -->
+<section class="slide">
+  <span class="slide-number">11 / 13</span>
+  <span class="slide-tag">趋势二 · 多智能体与市场</span>
+  <h2>多智能体系统与<span style="color:var(--accent-warm)">商业化加速</span></h2>
+  <div class="slide-divider"></div>
+  
+  <div class="cols cols-3" style="margin-top:24px; margin-bottom:32px;">
+    <div class="stat">
+      <div class="stat-num">$6.4B</div>
+      <div class="stat-label">2025上半年美国数字健康融资</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$600M</div>
+      <div class="stat-label">2025年AI医疗文档收入</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2.4×</div>
+      <div class="stat-label">年同比增长率</div>
+    </div>
+  </div>
+
+  <div class="cols cols-2">
+    <div class="card">
+      <div class="card-icon green">🤖</div>
+      <h3>从"单一工具"到"AI团队"</h3>
+      <p>行业正从单一聊天机器人转向多智能体系统——AI Scribe写病历、AI Coder编码计费、AI Nurse分诊、AI Consultant辅助决策，各司其职、协同工作。</p>
+    </div>
+    <div class="card">
+      <div class="card-icon blue">🔗</div>
+      <h3>MedPlan的天然优势</h3>
+      <p>我们的两阶段架构（评估 → 方案）天然适合拆分为两个专业化智能体，嵌入更大的临床工作流系统——<strong style="color:var(--text-primary)">从研究原型到产品架构的进化路径。</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ====== SLIDE 12: REGULATION ====== -->
+<section class="slide">
+  <span class="slide-number">12 / 13</span>
+  <span class="slide-tag">趋势三 · 监管合规</span>
+  <h2>全球监管<span style="color:var(--accent-rose)">加速收紧</span></h2>
+  <div class="slide-divider"></div>
+  <p class="lead" style="margin-bottom:28px;">可解释性(Explainability)从"学术加分项"变成了"法律硬要求"。</p>
+  
+  <div class="cols cols-3">
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <h3>🇪🇺 欧盟 AI Act</h3>
+      <p style="font-size:17px;">2026年8月起，高风险AI系统（含医疗设备）全面适用。要求质量管理、透明度、人类监督。医疗AI被明确归类为"高风险"。</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent-rose);">
+      <h3>🇨🇳 中国</h3>
+      <p style="font-size:17px;">《生成式AI服务管理暂行办法》已生效，要求内容标注、用户同意、数据质量。2025年9月起合成内容标识规则实施。国企已限制使用OpenClaw。</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent-warm);">
+      <h3>🇺🇸 美国各州</h3>
+      <p style="font-size:17px;">科罗拉多AI法案、德州TRAIGA、加州AI透明度法案均于2026年生效，聚焦算法歧视防范和高风险系统问责。</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:28px;">
+    <p>💡 <strong>MedPlan的合规优势：</strong>两阶段SOAP设计天然具有可解释性——每个治疗建议都可追溯到诊断评估，每个评估都可追溯到具体的S和O输入。相比黑箱模型，<strong style="color:var(--accent)">这是一种"设计即合规"的架构。</strong></p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 13: DISCUSSION ====== -->
+<section class="slide">
+  <span class="slide-number">13 / 13</span>
+  <span class="slide-tag">开放讨论</span>
+  <h2>从理想到现实：<span style="color:var(--accent)">开放问题</span></h2>
+  <div class="slide-divider"></div>
+  
+  <div style="max-width: 800px; margin-top: 28px;">
+    <div class="q-card" style="border-left-color: var(--accent);">
+      🏛️ 中国的AI医疗产品监管路径应该如何演进？"AI生成的治疗方案"的法律地位是什么？
+    </div>
+    <div class="q-card" style="border-left-color: var(--accent-warm);">
+      💰 如何量化AI临床决策支持系统的ROI？除了效率，还有什么价值维度？
+    </div>
+    <div class="q-card" style="border-left-color: var(--accent-green);">
+      🏥 从研究原型（如MedPlan）到医院规模化部署，最大的障碍是技术、数据、还是信任？
+    </div>
+    <div class="q-card" style="border-left-color: var(--accent-rose);">
+      🤖 OpenClaw等智能体框架进入中国医疗市场：机遇还是风险？如何平衡创新与安全？
+    </div>
+  </div>
+
+  <div style="margin-top: 40px; text-align: center;">
+    <p style="font-size: 22px; color: var(--text-primary); font-family: 'Noto Serif SC', serif; font-weight: 600;">
+      谢谢 · Thank You
+    </p>
+    <p style="font-size: 15px; color: var(--text-muted); margin-top: 12px;">
+      论文：arxiv.org/abs/2503.17900 · 代码：github.com/JustinHsu1019/MedPlan
+    </p>
+  </div>
+</section>
+
+<!-- ====== SLIDE 14: REFERENCES ====== -->
+<section class="slide">
+  <span class="slide-number">References</span>
+  <span class="slide-tag">参考文献</span>
+  <h2>未来展望相关<span style="color:var(--accent)">参考文献</span></h2>
+  <div class="slide-divider"></div>
+
+  <div style="max-width: 900px; margin-top: 24px;">
+
+    <h3 style="color:var(--accent); font-size:17px; margin-bottom:16px; margin-top:24px;">智能体与OpenClaw</h3>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:13px; line-height:2.2; color:var(--text-secondary);">
+      <p>[1] Steinberger, P. <strong style="color:var(--text-primary)">OpenClaw</strong> — Open-source autonomous AI agent framework. github.com/nicepkg/openclaw, 2025.</p>
+      <p>[2] Yang, W. et al. <strong style="color:var(--text-primary)">"When OpenClaw Meets Hospital: Toward an Agentic Operating System for Dynamic Clinical Workflows."</strong> arXiv:2603.11721, Mar 2026.</p>
+      <p>[3] FreedomIntelligence. <strong style="color:var(--text-primary)">OpenClaw-Medical-Skills</strong> — The largest open-source medical AI skills library. github.com/FreedomIntelligence/OpenClaw-Medical-Skills, 2026.</p>
+      <p>[4] Lee, A. G. <strong style="color:var(--text-primary)">"OpenClaw: Why 24-Hour Autonomous Agents Are Not Ready for Healthcare."</strong> Medium, Feb 2026.</p>
+    </div>
+
+    <h3 style="color:var(--accent-warm); font-size:17px; margin-bottom:16px; margin-top:32px;">医疗AI市场与趋势</h3>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:13px; line-height:2.2; color:var(--text-secondary);">
+      <p>[5] Menlo Ventures. <strong style="color:var(--text-primary)">"The State of AI in Healthcare 2025."</strong> menlovc.com, 2025.</p>
+      <p>[6] Wolters Kluwer Health. <strong style="color:var(--text-primary)">"2026 Healthcare AI Trends: Insights from Experts."</strong> wolterskluwer.com, Dec 2025.</p>
+      <p>[7] Chief Healthcare Executive. <strong style="color:var(--text-primary)">"AI in Health Care: 26 Leaders Offer Predictions for 2026."</strong> chiefhealthcareexecutive.com, Jan 2026.</p>
+      <p>[8] FPT Software. <strong style="color:var(--text-primary)">"Top AI Trends in 2026: How Ready Are You?"</strong> fptsoftware.com, 2026.</p>
+    </div>
+
+    <h3 style="color:var(--accent-rose); font-size:17px; margin-bottom:16px; margin-top:32px;">监管与合规</h3>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:13px; line-height:2.2; color:var(--text-secondary);">
+      <p>[9] European Union. <strong style="color:var(--text-primary)">Regulation (EU) 2024/1689 — The AI Act.</strong> Official Journal of the EU, Jul 2024. High-risk provisions applicable Aug 2026.</p>
+      <p>[10] Pesapane, F. et al. <strong style="color:var(--text-primary)">"Artificial intelligence as medical device in radiology: the regulatory scenario in the EU, USA, and China."</strong> European Radiology, Mar 2026.</p>
+      <p>[11] OneTrust. <strong style="color:var(--text-primary)">"Where AI Regulation is Heading in 2026: A Global Outlook."</strong> onetrust.com, Mar 2026.</p>
+      <p>[12] Gardner Law. <strong style="color:var(--text-primary)">"The EU AI Act Has Arrived."</strong> Compliance timeline for high-risk AI systems. gardner.law, 2025.</p>
+    </div>
+
+    <h3 style="color:var(--accent-green); font-size:17px; margin-bottom:16px; margin-top:32px;">MedPlan 本文</h3>
+    <div style="font-family:'JetBrains Mono', monospace; font-size:13px; line-height:2.2; color:var(--text-secondary);">
+      <p>[13] Hsu, H.-L.*, Dao, C.-T.* et al. <strong style="color:var(--text-primary)">"MedPlan: A Two-Stage RAG-Based System for Personalized Medical Plan Generation."</strong> ACL 2025. arXiv:2503.17900.</p>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>
